@@ -1,0 +1,9 @@
+db:
+  type: "bolt" # bolt used by default, later add etcd
+  src: "test.db"
+
+quasar:
+  name: "Test Server"
+  listen:
+    host: "127.0.0.1"
+    port: 6947

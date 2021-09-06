@@ -1,0 +1,50 @@
+== Hubble
+:imagesdir: ../docs/images
+
+=== Overview
+
+Hubble is a frontend application which communicates with the Quasar API
+in order to manage Starship networks.
+It shows all available networks in a sidebar, in addition to a 'Create New' button.
+When you select a network it shows network settings, which you can modify.
+You also have the option to delete a network.
+
+.Hubble Network Page
+image::hubblenetwork.png[]
+
+The network settings page also shows all nodes in the network as collapsible
+cards, which initially show simple information such as the nodename,
+hostname and IP address,
+but can be expanded to reveal settings for the node that can be updated such
+as firewall rules, and groups which the node is in etc.
+
+.Hubble Node Management
+image:hubblenodes.png[]
+
+=== Installation
+
+[source,shell]
+----
+cd hubble
+npm install
+
+# to build to static site (not needed for running dev server)
+npm run build
+----
+
+=== Operating Instructions
+
+The build creates a `public` directory containing HTML, CSS and JavaScript files
+which can be served using any HTTP server.
+
+[source,shell]
+----
+cd hubble
+
+# to run dev server
+npm run dev
+
+# to run 'production' server
+npm run start
+----
+

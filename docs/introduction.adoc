@@ -1,0 +1,66 @@
+== Introduction
+
+=== Overview
+
+Nebula is "a scalable overlay networking tool" which allows you to
+"seamlessly connect computers anywhere in the world".
+footnote:[GitHub. 2021. slackhq/nebula. [online\] Available at: https://github.com/slackhq/nebula]
+It uses UDP hole punching to allow nodes to connect directly even if they
+are behind a firewall which only allows established traffic through.
+
+To run Nebula on a node, you must have the `nebula` binary, along with
+a private key, certificate and yaml config file.
+Signing certificates and customising the config files can become
+tedious when the size of a Nebula network grows beyond a few nodes.
+Often users will create keypairs and certificates for all nodes from a single host,
+then transfer the private keys and certificates to the correct nodes.
+This goes against best security practices as it involves transferring a
+private key, often across a network, and it means that a host, other than
+the node which will use the key, has had access to this private key.
+
+This toolkit aims to overcome some of these issues by making it easy to bring
+up a new node,
+provisioning a certificate and giving it configuration, without the private key
+leaving the node.
+
+Although Nebula can scale to support thousands of nodes,
+this toolkit is currently focused on (but not limited to) managing smaller networks
+such as homelab networks - where some hosts are based on a home network,
+some may be running in 'the cloud' with VPS services, and some nodes such as laptops
+and mobiles may be constantly moving between different private networks.
+
+The 'Starship' toolkit includes an API server (Quasar) with a database
+which acts as a central management system,
+a client tool (Neutron) used by nodes to request to join networks
+and update their certificates and configuration,
+and a web client (Hubble) which communicates with the API server in order
+to manage networks.
+The management system can support multiple networks,
+and the client tool will allow a node to join multiple networks.
+The management system will sign certificates for nodes when they
+have been approved using the API.
+
+A demo of this project can be found here: https://youtu.be/glIgz1huZPI
+
+=== Alternatives
+
+One alternative to designing a new system for certificate signing would be
+to create an extension or a fork of the `step-ca` certificate management
+tool.
+This would be very powerful and useful for large datacentres
+as it would integrate with many different forms of authentication and identity
+services.
+It is likely that there would be large groups of nodes which could use the same
+configuration,
+meaning tools such as Ansible, Chef or Puppet would be able to set up
+and give the configuration files to the correct nodes.
+
+However this would lose the ability to have fine grained control over configuration.
+For smaller networks, this control can be very useful where each node has
+a specific purpose and therefore need different firewall rules.
+
+Additionally, `step-ca` is now a large and mature project which would take time to
+understand well enough to successfully add the ability to sign Nebula
+certificates.
+Considering that I'm working with a language that I have never used before,
+it made more sense to write a new program from scratch, albeit less complex and powerful.

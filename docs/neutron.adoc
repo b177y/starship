@@ -1,0 +1,139 @@
+== Neutron
+
+=== Overview
+
+Neutron is a client which Starship nodes use to request to join networks,
+and update their configuration and certificates.
+
+When joining a new network, Neutron will create a new Nebula keypair.
+It will then send a request to Quasar to join a specific network.
+This request includes the node name, the network it wants to join,
+its hostname and its Nebula public key.
+This information is sent as a JSON payload, signed using the Nebula
+private key.
+This is encoded similarly to a PASETO token.
+PASETO tokens are similar to JSON Web Tokens (JWTs),
+however do not suffer the same vulnerabilities JWTs suffer due to the vague
+protocol specification.
+
+When updating, Neutron will send requests to Quasar to obtain
+an updated certificate and configuration file.
+For Quasar to send these, Neutron must include a signed token
+which includes it's nodename and the network name it is trying to
+update, and the node must be approved and active on the Quasar server.
+The signature on the token is verified against the public key stored
+for the node on the Quasar server.
+
+The update script can be run at frequent intervals to keep the node updated
+with the most recent configuration changes.
+
+=== Language and Paradigm Chosen
+
+Neutron is written in Golang.
+There were many reasons for this, but the most significant is that Golang
+can statically compile binaries easily.
+This means that a small binary can be downloaded to a node with no extra dependencies
+required to use the tool.
+
+Golang has many other advantages.
+For example, it is strongly typed, and there is little 'magic' as with
+languages such as Python.
+The go compiler is also 'fussy'.
+For example, it will refuse to compile when you have an unused variable declared.
+Although this makes it harder to work with initially,
+it means it is easier to write good code.
+
+Golang is an imperative language,
+but it supports programming in object oriented and functional paradigms.
+An imperative language is necessary due to the complexity and unique nature
+of the tools.
+Features of object oriented programming such as classes and inheritence are
+not available in golang,
+but other features including polymorphism (using interfaces) and methods
+are available and have been used in this tool.
+
+// paradigm
+
+=== Installation Instructions
+
+[source,shell]
+----
+# build
+cd starship
+
+# equivalent of `go build -o neutron cmd/neutron/*.go`
+make neutron
+----
+
+=== Operating Instructions
+
+==== Manual install
+
+[source,shell]
+----
+# request to join network
+./neutron join -quasar http://127.0.0.1:6947 -network NETWORK -name NAME
+
+# approve node from frontend then fetch latest config from Quasar
+./neutron update -network NETWORK
+# send SIGHUP to nebula to force config reload
+pgrep nebula | xargs sudo kill -1
+----
+
+==== Using Install Script
+
+[source, shell]
+----
+# quick install from release
+wget https://github.com/b177y/starship-public/releases/download/v0.3.0/install-neutron.sh -O /tmp/install-neutron.sh
+
+# check content
+less /tmp/install-neutron.sh
+bash /tmp/install-neutron.sh
+
+# approve node from frontend then fetch latest config from Quasar
+neutron update -network NETWORK
+
+# start nebula with systemd
+sudo systemctl start nebula@NETWORK
+
+# send SIGHUP to nebula to force config reload
+pgrep nebula | xargs sudo kill -1
+----
+
+=== Libraries and Tools Needed to Run
+
+* Golang
+** slackhq/nebula - nebula certificate tools
+** sirupsen/logrus - logging library
+** tetris-io/shortid - library for creating short uuids
+* systemd (not a hard requirement, but used for example setup)
+* Nebula - this is provided by the install script but otherwise must
+be downloaded from link:https://github.com/slackhq/nebula/releases[here]
+
+=== Issues
+
+// A section outlining any issues that needed to be overcome during development and what mitigations were put in place. This can include things you tried but that didn’t work, things you wanted to do but couldn’t complete and the reasons why
+
+The keys used by nebula are saved in the Montgomery format as they are used
+for x25519 Diffie-Helman key exchange.
+This means they cannot be used to sign standard PASETO tokens - which can only use
+ed25519 signatures for asymmetric key authentication.
+This requires Edwards formatted keys rather than Montgomery.
+The "twisted Edwards curve used by Ed25519 and the Montgomery
+curve used by X25519 are birationally equivalent"
+footnote:[Valsorda, F. 2019. Using Ed25519 signing keys for encryption [online\] Available at: https://blog.filippo.io/using-ed25519-keys-for-encryption/]
+which means you can convert between the two key formats.
+However you can only convert directly from Edwards to Montgomery,
+not the other way around.
+
+To avoid having multiple private keys for each network a node is in
+(one for Nebula and one for communicating with Quasar),
+I created a library for signing and verifying 'XPASETO' tokens.
+These use Montgomery keys for XEdDSA signatures, outlined by Signal.
+footnote:[Perrin, T. 2016. The XEdDSA and VXEdDSA Signature Schemes [online\] Available at: https://signal.org/docs/specifications/xeddsa/]
+This package is based off an existing paseto library,
+footnote:[GitHub. 2021. o1egl/paseto. [online\] Available at: https://github.com/o1egl/paseto]
+from which functions are borrowed where it wasn't necessary to rewrite them.
+It should be noted that the XPASETO library does NOT conform with the PASETO
+standard (see https://paseto.io/rfc/ section 5.2).

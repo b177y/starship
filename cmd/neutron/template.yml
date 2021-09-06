@@ -1,0 +1,75 @@
+pki:
+  ca: /etc/nebula/{{.Netname}}/ca.crt
+  key: /etc/nebula/{{.Netname}}/neutron.key
+  cert: /etc/nebula/{{.Netname}}/neutron.crt
+
+static_host_map:
+  {{range .StaticHosts}}
+  {{ .NebulaAddress }}: {{.Endpoint}}
+  {{end}}
+
+lighthouse:
+  am_lighthouse: {{.AmLighthouse}}
+  interval: 60
+  hosts:
+  {{range .Lighthouses}}
+    - {{ . }}
+  {{end}}
+
+cipher: {{.Cipher}}
+
+punchy:
+  punch: true
+
+listen:
+  host: 0.0.0.0
+  port: {{ .ListenPort }}
+
+tun:
+  disabled: false
+  dev: {{.Netname}}0
+  drop_local_broadcast: false
+  drop_multicast: false
+  tx_queue: 500
+  mtu: 1300
+
+logging:
+  level: info
+  format: text
+
+firewall:
+  conntrack:
+    tcp_timeout: 12m
+    udp_timeout: 3m
+    default_timeout: 10m
+    max_connections: 100000
+  outbound:
+    {{ range .FirewallOutbound }}
+      {{ if .Any }}
+    - port: {{ .Port }}
+      proto: {{ .Proto }}
+      host: any
+      {{ else }}
+    - port: {{ .Port }}
+      proto: {{ .Proto }}
+      groups:
+        {{ range .Groups }}
+        - {{ . }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  inbound:
+    {{ range .FirewallInbound }}
+      {{ if .Any }}
+    - port: {{ .Port }}
+      proto: {{ .Proto }}
+      host: any
+      {{ else }}
+    - port: {{ .Port }}
+      proto: {{ .Proto }}
+      groups:
+        {{ range .Groups }}
+        - {{ . }}
+        {{ end }}
+      {{ end }}
+    {{ end }}

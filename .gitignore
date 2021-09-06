@@ -1,0 +1,5 @@
+hubble/node_modules/
+hubble/public/build/
+*.db
+.vim/
+.DS_Store

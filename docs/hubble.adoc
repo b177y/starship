@@ -1,0 +1,99 @@
+== Hubble
+
+=== Overview
+
+Hubble is a frontend application which communicates with the Quasar API
+in order to manage Starship networks.
+It shows all available networks in a sidebar, in addition to a 'Create New' button.
+When you select a network it shows network settings, which you can modify.
+You also have the option to delete a network.
+
+.Hubble Network Page
+image::hubblenetwork.png[]
+
+The network settings page also shows all nodes in the network as collapsible
+cards, which initially show simple information such as the nodename,
+hostname and IP address,
+but can be expanded to reveal settings for the node that can be updated such
+as firewall rules, and groups which the node is in etc.
+
+.Hubble Node Management
+image:hubblenodes.png[]
+
+=== Language and Paradigm Chosen
+
+// and justification why
+To make the application easily accessible for users,
+I have built it as a web application.
+This means it works cross platform and does not require any installation
+on a client device.
+Hubble is built with HTML, CSS and JavaScript as this is what is needed
+to make an interactive web application.
+
+In order to develop more efficiently, Hubble is built using a tool called 'Svelte'.
+Although this can be considered an alternative to frameworks such as React,
+Angular and Vue, it is not a framework as such but more of a compiler.
+It allows you to program reactively, with code broken down into components.
+The coding process is similar to when using frameworks such as React,
+but code is compiled to static HTML, CSS and native JavaScript - whereas many
+other frameworks bundle a full library which the client uses to interpret the
+code at runtime.
+This allows Svelte to have a small footprint in terms of both resource usage
+and size of the compiled site.
+
+Svelte uses a reactive programming paradigm, which is a subset of declarative
+paradigms.
+You can declare what should happen as a result of something else - to make
+the frontend *react* to changes as they happen.
+For example if a change is made to a network's settings,
+other parts of the interface can *react* and update to reflect the change.
+
+=== Installation Instructions
+
+[source,shell]
+----
+cd hubble
+npm install
+
+# to build to static site (not needed for running dev server)
+npm run build
+----
+
+=== Operating Instructions
+
+The build creates a `public` directory containing HTML, CSS and JavaScript files
+which can be served using any HTTP server.
+
+[source,shell]
+----
+cd hubble
+
+# to run dev server
+npm run dev
+
+# to run 'production' server
+npm run start
+----
+
+=== Libraries and Tools Needed to Run
+
+* nodejs
+* npm - node package manager
+** svelte - compiler for `.svelte` files to HTML/CSS/JS
+** svelte-notifications - for notifications
+** axios - for API requests to Quasar
+** svelte-routing - For managing pages and navigation
+** tailwindcss - simple class based css framework
+
+=== Issues
+
+// A section outlining any issues that needed to be overcome during development and what mitigations were put in place. This can include things you tried but that didn’t work, things you wanted to do but couldn’t complete and the reasons why
+
+There were no major issues with the development of the Hubble frontend,
+but it involved the challenge of learning a new style of web app development
+as I had never used Svelte before.
+
+Coming from a React background meant I had to learn new concepts
+of global stores, event management and overall project management.
+However, Svelte is simple and easy to learn so I was able to pick
+these up reasonably quickly.

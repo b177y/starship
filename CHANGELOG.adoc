@@ -1,0 +1,130 @@
+= Changelog
+
+The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog],
+and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
+
+
+[discrete]
+== 0.3.0 (2021-05-23)
+
+[discrete]
+=== Added
+
+* Quasar signs config using XPASETO tokens (additional security layer to HTTPS)
+* Network certificate fingerprints are shown in Hubble frontend
+* Node public key fingerprints are shown in Hubble frontend
+* JWT Middleware has been added to require username+password auth to manage networks.
+
+[discrete]
+== 0.2.0 (2021-05-22)
+
+[discrete]
+=== Added
+
+* Added ability to modify firewall rules through Quasar
+* Added firewall update forms to Hubble
+* Time is saved when a node fetches the latest config
+* Latest config fetch time is shown in Hubble
+
+[discrete]
+== 0.1.0 (2021-05-22)
+
+[discrete]
+=== 2021-05-22
+
+==== Added
+
+* Listen port can now be changed through frontend
+
+==== Fixed
+
+* Formatting of static host map in nebula yaml config
+
+[discrete]
+=== 2021-05-21
+
+==== Added
+
+* Quasar config endpoint fully working
+* Neutron get config and write to yaml file working
+
+[discrete]
+=== 2021-05-20
+
+==== Added
+
+* Update node endpoint working in Quasar
+* Update node functionality working in hubble
+
+[discrete]
+=== 2021-05-19
+
+==== Changed
+
+* Using negroni golang library for logging and future authentication middleware.
+
+==== Added
+
+* Added cipher type to network information in db and API responses.
+* Completed update network API endpoint.
+* Added node info endpoints.
+* Added groups array to networks in db and made them updatable.
+
+[discrete]
+=== 2021-05-18
+
+==== Added
+
+* Started working on Hubble frontend using Svelte compiler
+* Created frontend app structure and integrated with quasar
+* Modified how CORS requests work with quasar to work with client
+
+[discrete]
+=== 2021-05-17
+
+==== Added
+
+* Finished neutron join network capability
+* Started adding neutron update capability
+
+[discrete]
+=== 2021-05-16
+
+==== Added
+
+* Node Endpoints for Quasar
+* Finished key network endpoints for Quasar
+* Added some neutron endpoints
+
+[discrete]
+=== 2021-05-14
+
+==== Changed
+
+* Removed Python and switched back to golang due to crypto dependencies
+
+[discrete]
+=== 2021-05-10
+
+==== Changed
+
+* Using Python for Quasar instead of golang
+
+[discrete]
+=== Initial Stages - 2021-04-08
+
+==== Added
+
+* Project Structure
+** `cmd` directory for neutron and quasar main outputs
+** `examples` for example config
+** `nebutils` as library for neutron and quasar to share code
+** general repo files e.g. README, LICENSE, CHANGELOG
+* Started work on `quasar`
+** Added functionality to add a new network
+** Added basic http server functionality
+** added ability to interact with boltdb as a database interface
+* Started work on `neutron`
+** Added main function to parse user flags
+** Started on `init.go` which gets ca cert,
+generates keys and requests signing

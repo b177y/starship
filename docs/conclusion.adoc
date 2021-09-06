@@ -1,0 +1,131 @@
+== Conclusions
+
+The state of the toolset as of the submission is fully functional
+and fulfils all requirements from the project plan.
+
+The toolset can be used to create and manage Nebula overlay networks.
+A demo of this (see introduction) shows that the tools successfully work
+together.
+
+== Future Work
+
+=== Improved Authentication
+
+// management
+Currently there is a single user called 'admin',
+and the password is defined by the environment variable `QUASAR_ADMINPASS`.
+This is good enough for basic demonstrations and usage for a simple network
+such as a homelab which is managed by one person.
+Others can still join nodes to the network, while one person can manage access.
+
+However, for larger scale networks such as those of small corporations or academic groups,
+it would be useful for multiple people to be able to manage networks.
+This could involve role based access e.g. one user can manage all nodes in
+a specific network while another user can only manage a specific node.
+
+// basic auth on join request
+Additionally, there is no authentication on the Quasar endpoint that
+Neutron uses to request to join a network.
+This is not a direct security risk to the network as nodes
+must be approved by an authorised client before they can receive a certificate
+signed by the CA.
+However, if Quasar is running on the Internet,
+denial of service attacks could be possible as someone could repeatedly
+request to join a network.
+
+A possible solution is for a token to be created for each network which
+would be required with a join request.
+These tokens could be rotated at intervals such as every 24 hours.
+The tokens would be less sensitive than credentials for the management endpoints
+as nodes would still require approval.
+This means you could share tokens with people
+who you partially trust so that they can join your network,
+and you wouldn't have to worry about them changing firewall rules in your network.
+You would then only be risking a denial of service from these people
+you partially trust, which is a significantly smaller attack surface
+compared to being open to the internet.
+
+=== HTTPS Support
+
+Currently HTTPS can be set up using a reverse proxy such as traefik or nginx.
+Using tools such as docker, this can be set up quickly and easily with a replicable
+setup.
+However, one of the big advantages of using Golang is that it compiles code to
+a static binary.
+Golang's built in HTTP server (which Quasar uses) has support for running over HTTPS.
+This means that it would be very easy to add support.
+
+To use HTTPS you would run the server with:
+
+[source, go]
+----
+http.ListenAndServeTLS(addr, certFile, keyFile, handler)
+----
+
+Instead of:
+
+[source, go]
+----
+http.ListenAndServe(addr, handler)
+----
+
+Adding built in support would involve adding an option to
+the yaml config to enable HTTPS, and to configure key and cert paths.
+
+=== Input Validation
+
+When incoming JSON is decoded by the Quasar API,
+it isn't validated against any constraints.
+This means injection attacks could be attempted, for example
+it is possible to create a network called "<script>alert(0)</script>".
+
+Although Svelte protects against this and renders the script tag as a string,
+it should be validated by Quasar to limit the possibilities of injection attacks.
+
+Golang structs allow 'tags' on attributes, which are used by the json package
+to decode and encode json data.
+Third party libraries provide the ability to use additional tags to add validators
+to these tags.
+
+For example when creating a new network, the `NewNetSchema` struct
+is used.
+
+[source,go]
+----
+type NewNetSchema struct {
+	Name string `json:"name"`
+	Cidr string `json:"cidr"`
+}
+----
+
+The `json:"name"` tag tells the json decoder if there is a field with the key
+`name`, it should use the value as the value for `NewNetSchema.Name`.
+Using an external library such as `go-playground/validator` you could add validators
+as follows:
+
+[source,go]
+----
+type NewNetSchema struct {
+	Name string `json:"name" validate:"max=30,alphanum"`
+	Cidr string `json:"cidr" validate:"cidrv4"`
+}
+----
+
+You could then validate requests using:
+
+[source,go]
+----
+// example test struct
+net := NewNetSchema{
+    Name: "testnet",
+    Cidr: "192.168.1.0/24",
+}
+err := validate.Struct(net)
+if err := nil {
+    log.Error(err)
+}
+----
+
+Overall, although the current project fulfils its requirements and works as
+intended, there are lots of improvements that can be made to improve the security
+and usability of the toolset.

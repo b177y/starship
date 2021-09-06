@@ -1,0 +1,138 @@
+= Starship 🚀
+
+== Overview
+
+CAUTION: THIS PROJECT IS NOT PRODUCTION READY.
+
+The goal of this project is to provide a config and certificate
+management system for link:https://github.com/slackhq/nebula[nebula].
+This project was done in a short amount of time and it is my first
+project using golang.
+I would not recommend using it without auditing it first.
+
+== Quasar Server
+
+=== Overview
+
+Quasar is a Central Management System (CMS) for managing Starship networks.
+It provides APIs for two types of clients:
+
+* Neutron Nodes
+** These authenticate by signing requests using their nebula private key
+* Frontend clients / management tools
+** These authenticate using JSON Web Tokens
+
+Quasar can be configured using a yaml config file.
+
+The API for neutron nodes provides the following endpoints:
+
+The API for management clients provides endpoints for:
+
+* listing networks
+* getting CA cert for a network
+* listing nodes in a network
+* updating network settings
+* updating node settings
+* approving / enabling / disabling nodes
+
+=== Installation Instructions
+
+[source,shell]
+----
+make quasar
+----
+
+=== Operating Instructions
+
+[source,shell]
+----
+# set JWT signing secret
+export QUASAR_AUTHSECRET=$(uuid)
+
+# set admin account password
+export QUASAR_ADMINPASS="password"
+
+# start server
+./quasar serve -config examples/quasar.yml
+----
+
+== Neutron
+
+=== Overview
+
+Neutron is a client which Starship nodes use to request to join networks,
+and update their configuration and certificates.
+
+When joining a new network, Neutron will create a new Nebula keypair.
+It will then send a request to Quasar to join a specific network.
+This request includes the node name, the network it wants to join,
+its hostname and its Nebula public key.
+This information is sent as a JSON payload, signed using the Nebula
+private key.
+This is encoded similarly to a PASETO token.
+PASETO tokens are similar to JSON Web Tokens (JWTs),
+however do not suffer the same vulnerabilities JWTs suffer due to the vague
+protocol specification.
+
+When updating, Neutron will send requests to Quasar to obtain
+an updated certificate and configuration file.
+For Quasar to send these, Neutron must include a signed token
+which includes it's nodename and the network name it is trying to
+update, and the node must be approved and active on the Quasar server.
+The signature on the token is verified against the public key stored
+for the node on the Quasar server.
+
+The update script can be run at frequent intervals to keep the node updated
+with the most recent configuration changes.
+
+=== Installation Instructions
+
+[source,shell]
+----
+# build
+cd starship
+
+# equivalent of `go build -o neutron cmd/neutron/*.go`
+make neutron
+----
+
+=== Operating Instructions
+
+==== Manual install
+
+[source,shell]
+----
+# request to join network
+./neutron join -quasar http://127.0.0.1:6947 -network NETWORK -name NAME
+
+# approve node from frontend then fetch latest config from Quasar
+./neutron update -network NETWORK
+# send SIGHUP to nebula to force config reload
+pgrep nebula | xargs sudo kill -1
+----
+
+==== Using Install Script
+
+[source, shell]
+----
+# quick install from release
+wget https://github.com/b177y/starship/releases/download/v0.3.0/install-neutron.sh -O /tmp/install-neutron.sh
+
+# check content
+less /tmp/install-neutron.sh
+bash /tmp/install-neutron.sh
+
+# approve node from frontend then fetch latest config from Quasar
+neutron update -network NETWORK
+
+# start nebula with systemd
+sudo systemctl start nebula@NETWORK
+
+# send SIGHUP to nebula to force config reload
+pgrep nebula | xargs sudo kill -1
+----
+
+== Hubble
+
+Hubble is the frontend for managing Starship networks.
+See link:hubble/README.adoc[] for setup instructions.

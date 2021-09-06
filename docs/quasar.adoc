@@ -1,0 +1,129 @@
+== Quasar
+
+=== Overview
+
+Quasar is a Central Management System (CMS) for managing Starship networks.
+It provides APIs for two types of clients:
+
+* Neutron Nodes
+** These authenticate by signing requests using their nebula private key
+* Frontend clients / management tools
+** These authenticate using JSON Web Tokens
+
+Quasar can be configured using a yaml config file.
+By default the API listens on port `6947` as the Helix Nebula
+is 694.7 light years away from earth.
+
+The API for neutron nodes provides the following endpoints:
+
+* /api/neutron/join - for a node to request to join a network.
+This request includes the Nebula public key for the node.
+The request is signed by the corresponding private key.
+This self-signed request is verified by Quasar.
+* /api/neutron/update - for a node to request configuration information
+and a certificate.
+Quasar will work out the configuration options based off the node's config
+in the database, and the config of other nodes.
+
+The API for management clients provides endpoints for:
+
+* listing networks
+* getting CA cert for a network
+* listing nodes in a network
+* updating network settings
+* updating node settings
+* approving / enabling / disabling nodes
+
+=== Language and Paradigm Chosen
+
+Quasar is written in Golang, for many of the same reasons as Neutron.
+In addition to these reasons,
+Nebula tools and libraries are written in Golang.
+Nebula has a custom certificate format (not x509 or SSH certs)
+and slack have made the library for interacting with these certificates
+open source so it is easy to include in a project.
+
+Although it would be possible to use the `nebula-cert` commandline tool
+with other languages using subprocesses,
+this would be less clean and less efficient than importing and using the
+native functions needed.
+Using a language other than Go would have to add this as an extra dependency for the tool.
+
+Furthermore, I could not find a way to use Montgomery keys for XEdDSA
+signatures in Python (the most likely alternative to Golang for this tool),
+and writing the cryptography functions from scratch myself would
+be a security (and time management) risk as maths and cryptography are
+not my areas of expertise.
+Golang has well maintained cryptography libraries as part of the language's
+standard package.
+Using the built in libraries in addition to some code borrowed from third party
+libraries,
+I was able to write a JSON token signing library which uses XEdDSA signatures.
+
+Golang uses an imperative programming paradigm.
+See the Neutron section for more on this.
+
+=== Installation Instructions
+
+[source,shell]
+----
+make quasar
+----
+
+=== Operating Instructions
+
+[source,shell]
+----
+# set JWT signing secret
+export QUASAR_AUTHSECRET=$(uuid)
+
+# set admin account password
+export QUASAR_ADMINPASS="password"
+
+# start server
+./quasar serve -config examples/quasar.yml
+----
+
+=== Libraries and Tools Needed to Run
+
+* Golang
+** slackhq/nebula - nebula certificate tools
+** boltdb/bolt - embedded key/value database
+** gorilla/mux - http router
+** urfave/negroni - http middleware manager
+** meatballhat/negroni-logrus - logging middleware support
+** sirupsen/logrus - logging library
+** rs/cors - CORS middleware
+
+=== Issues
+
+// A section outlining any issues that needed to be overcome during development and what mitigations were put in place. This can include things you tried but that didn’t work, things you wanted to do but couldn’t complete and the reasons why
+
+Part way through the project I decided to rewrite Quasar in Python,
+as I am more familiar with Python and I was running into time constraints.
+I had rewritten most of the API in Python when I tried to replicate
+the XPASETO library I had earlier written in Golang.
+I was unable to find the necessary libraries in Python to support this.
+Although Golang is a newer language than Python,
+it was created by Google and has always had a focus on security,
+meaning the built in crypto libraries are more advanced.
+
+Another problem I had with the Python rewrite was that I had to use
+the `nebula-cert` binary with subprocesses for creating and signing
+certificates.
+This adds an extra dependency to the project and is not a clean way
+of interacting with certificates.
+
+I decided to switch back to Golang for these reasons,
+but fortunately I ended up finding it easier than I thought it would be.
+
+Another problem I had was with the conversion of Edwards keys (used by the CA)
+to Montgomery Curve25519 keys (used by Nebula nodes).
+I used functions from a project by Filippo Valsorda (Go team security lead)
+to perform the key conversion.
+footnote:[GitHub. 2021. FiloSottile/age. [online\] Available at: https://github.com/FiloSottile/age/blob/bbab440e198a4d67ba78591176c7853e62d29e04/internal/age/ssh.go#L174]
+The function for converting public keys worked,
+but the private key function did not.
+After lots of research, I found that key clamping
+footnote:[Craige, J. 2021. An Explainer On Ed25519 Clamping [online\] Available at: https://www.jcraige.com/an-explainer-on-ed25519-clamping]
+was needed.
